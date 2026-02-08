@@ -44,7 +44,7 @@ function App() {
     // We might need a "Start" button or wait for first click.
     // But adhering to original logic which tried to run on load:
     const timer = setTimeout(() => {
-      speak("Initializing NEXIS..");
+      speak("Initializing OnIt..");
       wishMe();
     }, 1000);
 
@@ -126,11 +126,11 @@ function App() {
     if (message.includes('hey') || message.includes('hello') || message.includes('hi')) {
       speak("Hello friend, How May I Help You?");
     } else if (message.includes('who are you')) {
-      speak("My name is NEXIS. I'm a Virtual Assistant Created by My God Foxa whose real name is Amay.");
+      speak("My name is OnIt. I'm a Virtual Assistant Created by My God Foxa whose real name is Amay.");
     } else if (message.includes('how are you')) {
       speak("I am very fine. Thank you so much for asking. I feel so grateful for helping you.");
     } else if (message.includes('what is your name')) {
-      speak("My name is NEXIS.");
+      speak("My name is OnIt.");
     } else if (message.includes('bye')) {
       speak("Bye, nice meeting you.");
     } else if (message.includes("i love you")) {
@@ -207,7 +207,7 @@ function App() {
   return (
     <>
       <div className="main">
-        <h1 className="main-heading">NEXIS</h1>
+        <h1 className="main-heading">OnIt</h1>
         <p className="tagline">I am available for you <span className="highlight">24/7</span></p>
         <p className="sub-tagline">How may I assist you?</p>
 
@@ -243,21 +243,6 @@ function App() {
             onKeyDown={handleKeyDown}
           />
           <button className="send-button" onClick={handleSend}>Send</button>
-        </div>
-      </div>
-
-      <div className="footer-section">
-        <div className="footer-roles">
-          <div className="role-group">
-            <h3 className="role-title">Developer</h3>
-            <p className="name">Name: Amay</p>
-            <p className="email">Email: amay123@gmail.com</p>
-          </div>
-          <div className="role-group">
-            <h3 className="role-title">Maintainer</h3>
-            <p className="name">Name: Amay</p>
-            <p className="email">Email: amay123@gmail.com</p>
-          </div>
         </div>
       </div>
     </>

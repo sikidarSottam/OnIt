@@ -54,21 +54,28 @@ function App() {
   const speak = (text: string) => {
     const text_speak = new SpeechSynthesisUtterance(text);
 
-    // We'll prioritize high-quality male voices.
-    // Note: voices might be empty initially if not loaded, so we fetch directly if needed
+    // We'll prioritize high-quality female voices for a more natural sound.
     const currentVoices = voices.length > 0 ? voices : window.speechSynthesis.getVoices();
 
-    const desiredVoice = currentVoices.find(voice => voice.name === 'Google US English Male') ||
-      currentVoices.find(voice => voice.name.includes('Male') && voice.lang.startsWith('en-')) ||
-      currentVoices.find(voice => voice.lang === 'en-US');
+    // Looking for premium/natural female voices across different platforms
+    const desiredVoice =
+      currentVoices.find(voice => voice.name === 'Google UK English Female') ||
+      currentVoices.find(voice => voice.name === 'Google US English') ||
+      currentVoices.find(voice => voice.name.includes('Female')) ||
+      currentVoices.find(voice => voice.name.includes('Zira')) || // Windows
+      currentVoices.find(voice => voice.name.includes('Samantha')) || // macOS
+      currentVoices.find(voice => voice.name.includes('Natural')) ||
+      currentVoices.find(voice => voice.lang.startsWith('en-US') && !voice.name.includes('Male')) ||
+      currentVoices.find(voice => voice.lang.startsWith('en-') && !voice.name.includes('Male'));
 
     if (desiredVoice) {
       text_speak.voice = desiredVoice;
     }
 
+    // Tweak parameters for a more natural female tone
     text_speak.rate = 1;
     text_speak.volume = 1;
-    text_speak.pitch = 1;
+    text_speak.pitch = 1.1; // Slightly higher pitch for a female voice
 
     window.speechSynthesis.speak(text_speak);
   };

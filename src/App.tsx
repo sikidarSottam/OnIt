@@ -7,6 +7,11 @@ import CameraView from './components/CameraView';
 import type { ChatMessage } from './components/ChatHistory';
 import ChatHistory from './components/ChatHistory';
 import SettingsPanel from './components/SettingsPanel';
+import WidgetDrawer from './components/WidgetDrawer';
+import CommandChips from './components/CommandChips';
+import type { QuickChip } from './components/CommandChips';
+import OfflineIndicator from './components/OfflineIndicator';
+import KeyboardShortcuts from './components/KeyboardShortcuts';
 import { speechService } from './services/speechService';
 import { cameraService } from './services/cameraService';
 import { commandProcessor } from './services/commandProcessor';
@@ -20,10 +25,15 @@ function App() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [status, setStatus] = useState<"Idle" | "Active" | "Listening">("Idle");
   const [userName, setUserName] = useState(localStorage.getItem('onit_userName') || 'Boss');
-  const [preferredVoice, setPreferredVoice] = useState(localStorage.getItem('onit_preferredVoice') || '');
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  // Use a ref so we can track whether listener was registered without causing re-renders
+  // New features state
+  const [showWidgetDrawer, setShowWidgetDrawer] = useState(false);
+  const [showShortcuts, setShowShortcuts] = useState(false);
+  const [focusMode, setFocusMode] = useState(false);
+  const [liveTranscript, setLiveTranscript] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+
   const speakListenerRegistered = useRef(false);
 
   const addMessage = useCallback((text: string, sender: 'user' | 'assistant') => {
@@ -36,7 +46,6 @@ function App() {
     setMessages(prev => [...prev, newMessage]);
   }, []);
 
-  // Register the speak listener ONCE using a ref guard
   useEffect(() => {
     if (!speakListenerRegistered.current) {
       speakListenerRegistered.current = true;
@@ -46,33 +55,43 @@ function App() {
     }
   }, [addMessage]);
 
-  const wishMe = useCallback((name: string, voice: string) => {
+  const wishMe = useCallback((name: string) => {
     const hour = new Date().getHours();
     const greeting = hour >= 0 && hour < 12 ? "Good Morning" : hour >= 12 && hour < 17 ? "Good Afternoon" : "Good Evening";
-    speechService.speak(`${greeting} ${name}!`, voice);
+    speechService.speak(`${greeting} ${name}!`);
   }, []);
 
   const handleStart = () => {
     setIsStarted(true);
     setStatus("Active");
     setMessageContent(`Initializing OnIt.. Welcome ${userName}!`);
-    speechService.speak(`Initializing OnIt! Welcome ${userName}!`, preferredVoice);
-    // Slight delay so the first speech doesn't overlap
-    setTimeout(() => wishMe(userName, preferredVoice), 1500);
+    speechService.speak(`Initializing OnIt! Welcome ${userName}!`);
+    setTimeout(() => wishMe(userName), 1500);
   };
 
   const handleMicClick = () => {
+    if (status === 'Listening') {
+      // Stop listening
+      speechService.stopListening();
+      setStatus("Active");
+      setLiveTranscript('');
+      setMessageContent("Stopped listening.");
+      return;
+    }
     setStatus("Listening");
     setMessageContent("Listening....");
+    setLiveTranscript('');
     speechService.startListening(
       (transcript) => {
         setStatus("Active");
+        setLiveTranscript('');
         setMessageContent(transcript);
         addMessage(transcript, 'user');
         commandProcessor.processCommand(transcript);
       },
       (error) => {
         setStatus("Active");
+        setLiveTranscript('');
         console.error("Speech Error:", error);
         const errMsg = error === 'no-speech'
           ? "I didn't catch that. Please try again."
@@ -80,7 +99,10 @@ function App() {
             ? "I'm having network trouble. Please check your connection."
             : `I had a problem: ${error}`;
         setMessageContent(errMsg);
-        speechService.speak(errMsg, preferredVoice);
+        speechService.speak(errMsg);
+      },
+      (interimText) => {
+        setLiveTranscript(interimText);
       }
     );
   };
@@ -95,37 +117,40 @@ function App() {
     }
   };
 
-  // handleOpenCamera must use a stable reference for the useEffect below
+  // Re-run a previous command from chat history
+  const handleRerun = (text: string) => {
+    setMessageContent(text);
+    addMessage(text, 'user');
+    commandProcessor.processCommand(text);
+  };
+
   const handleOpenCamera = useCallback(async () => {
     setShowCamera(true);
     setStatus("Active");
-    // Wait for React to render the video element before accessing it
     requestAnimationFrame(async () => {
       if (videoRef.current) {
         try {
           await cameraService.startCamera(videoRef.current);
-          speechService.speak("Camera is now on.", preferredVoice);
+          speechService.speak("Camera is now on.");
         } catch {
-          speechService.speak("Sorry, I can't access the camera.", preferredVoice);
+          speechService.speak("Sorry, I can't access the camera.");
         }
       }
     });
-  }, [preferredVoice]);
+  }, []);
 
   const handleCloseCamera = () => {
     cameraService.stopCamera();
     setShowCamera(false);
-    speechService.speak("Camera is closed.", preferredVoice);
+    speechService.speak("Camera is closed.");
   };
 
-  // Register the 'open camera' command once; update its reference via a ref
   const handleOpenCameraRef = useRef(handleOpenCamera);
   useEffect(() => {
     handleOpenCameraRef.current = handleOpenCamera;
   }, [handleOpenCamera]);
 
   useEffect(() => {
-    // Register if not already registered
     const existing = commandProcessor.getAvailableCommands().find(c => c.name === 'Open Camera');
     if (!existing) {
       commandProcessor.registerCommand({
@@ -135,32 +160,113 @@ function App() {
         description: 'Opens the camera feed.',
       });
     }
-  }, []); // Only once on mount
+  }, []);
 
-  const handleSettingsChange = (settings: { userName: string; preferredVoice: string; theme: string }) => {
+  const handleSettingsChange = (settings: { userName: string; theme: string }) => {
     setUserName(settings.userName);
-    setPreferredVoice(settings.preferredVoice);
-    // Apply theme to the body so the whole page gets it
     document.body.setAttribute('data-theme', settings.theme);
     localStorage.setItem('onit_theme', settings.theme);
   };
 
-  // Apply saved theme on mount
   useEffect(() => {
     const savedTheme = localStorage.getItem('onit_theme') || 'dark';
     document.body.setAttribute('data-theme', savedTheme);
   }, []);
 
+  // Keyboard shortcuts handler
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't catch shortcuts when typing in an input
+      const tag = (e.target as HTMLElement).tagName;
+      const isInput = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
+
+      if (e.key === '?' && !isInput) {
+        e.preventDefault();
+        setShowShortcuts(prev => !prev);
+        return;
+      }
+
+      if (e.key === 'Escape') {
+        setShowShortcuts(false);
+        setShowWidgetDrawer(false);
+        setShowSettings(false);
+        if (focusMode) setFocusMode(false);
+        return;
+      }
+
+      if ((e.key === '/' || e.key === ' ') && !isInput) {
+        e.preventDefault();
+        inputRef.current?.focus();
+        return;
+      }
+
+      if (e.ctrlKey && e.key === 'm') {
+        e.preventDefault();
+        if (isStarted) handleMicClick();
+        return;
+      }
+
+      if (e.ctrlKey && e.key === 't') {
+        e.preventDefault();
+        setShowWidgetDrawer(prev => !prev);
+        return;
+      }
+
+      if (e.ctrlKey && e.key === 'f') {
+        e.preventDefault();
+        setFocusMode(prev => !prev);
+        return;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isStarted, focusMode, status]);
+
+  // Quick-action chips
+  const quickChips: QuickChip[] = [
+    { label: 'Time', icon: 'fa-clock', action: () => { commandProcessor.processCommand('what time'); } },
+    { label: 'Date', icon: 'fa-calendar', action: () => { commandProcessor.processCommand('what date'); } },
+    { label: 'Camera', icon: 'fa-camera', action: () => { handleOpenCameraRef.current(); } },
+    { label: 'YouTube', icon: 'fa-play', action: () => { commandProcessor.processCommand('open youtube'); } },
+    { label: 'Google', icon: 'fa-search', action: () => { commandProcessor.processCommand('open google'); } },
+    { label: 'Joke', icon: 'fa-laugh', action: () => { commandProcessor.processCommand('tell me a joke'); } },
+    { label: 'Toolbox', icon: 'fa-toolbox', action: () => { setShowWidgetDrawer(true); } },
+    { label: 'Help', icon: 'fa-question-circle', action: () => { commandProcessor.processCommand('help'); } },
+  ];
+
   return (
-    <div className="main">
-      <button
-        className="settings-toggle"
-        onClick={() => setShowSettings(true)}
-        aria-label="Open settings"
-        title="Settings"
-      >
-        <i className="fas fa-cog"></i>
-      </button>
+    <div className={`main ${focusMode ? 'focus-mode' : ''}`}>
+      {/* Offline Indicator */}
+      <OfflineIndicator status={status} />
+
+      {/* Top bar buttons */}
+      <div className="top-bar">
+        <button
+          className="top-btn"
+          onClick={() => setShowWidgetDrawer(true)}
+          aria-label="Open toolbox"
+          title="Toolbox (Ctrl+T)"
+        >
+          <i className="fas fa-th-large"></i>
+        </button>
+        <button
+          className={`top-btn ${focusMode ? 'active' : ''}`}
+          onClick={() => setFocusMode(!focusMode)}
+          aria-label="Toggle focus mode"
+          title="Focus Mode (Ctrl+F)"
+        >
+          <i className="fas fa-expand"></i>
+        </button>
+        <button
+          className="top-btn"
+          onClick={() => setShowSettings(true)}
+          aria-label="Open settings"
+          title="Settings"
+        >
+          <i className="fas fa-cog"></i>
+        </button>
+      </div>
 
       {showSettings && (
         <SettingsPanel
@@ -169,6 +275,9 @@ function App() {
         />
       )}
 
+      <WidgetDrawer isOpen={showWidgetDrawer} onClose={() => setShowWidgetDrawer(false)} />
+      <KeyboardShortcuts isOpen={showShortcuts} onClose={() => setShowShortcuts(false)} />
+
       {!isStarted ? (
         <div className="start-screen">
           <Header />
@@ -176,27 +285,37 @@ function App() {
           <button className="start-button" onClick={handleStart} aria-label="Start the assistant">
             Start Assistant
           </button>
+          <p className="start-hint">Or press <kbd>Enter</kbd></p>
         </div>
       ) : (
         <>
-          <Header />
+          {!focusMode && <Header />}
           <AssistantView status={status} />
 
-          <ChatHistory messages={messages} />
+          {!focusMode && (
+            <>
+              <CommandChips chips={quickChips} />
 
-          {showCamera && (
-            <CameraView
-              videoRef={videoRef}
-              onClose={handleCloseCamera}
-            />
+              <ChatHistory messages={messages} onRerun={handleRerun} />
+
+              {showCamera && (
+                <CameraView
+                  videoRef={videoRef}
+                  onClose={handleCloseCamera}
+                />
+              )}
+            </>
           )}
 
           <InputController
             messageContent={messageContent}
             inputValue={inputValue}
+            liveTranscript={liveTranscript}
+            isListening={status === 'Listening'}
             onInputChange={setInputValue}
             onMicClick={handleMicClick}
             onSend={handleSend}
+            inputRef={inputRef}
           />
         </>
       )}

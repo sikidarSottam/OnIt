@@ -5,6 +5,7 @@ export interface SpeechRecognitionResult {
 
 export type SpeechResultCallback = (result: string) => void;
 export type SpeechErrorCallback = (error: string) => void;
+export type InterimCallback = (interimText: string) => void;
 
 class SpeechService {
     private recognition: any = null;
@@ -20,12 +21,11 @@ class SpeechService {
         if (SpeechRecognitionAPI) {
             this.recognition = new SpeechRecognitionAPI();
             this.recognition.continuous = false;
-            this.recognition.interimResults = false;
+            this.recognition.interimResults = true; // Enable interim results for live transcript
             this.recognition.lang = 'en-US';
         }
 
         this.loadVoices();
-        // voiceschanged fires asynchronously in most browsers
         this.synthesis.addEventListener('voiceschanged', () => this.loadVoices());
     }
 
@@ -37,34 +37,49 @@ class SpeechService {
     }
 
     getVoices(): SpeechSynthesisVoice[] {
-        // If voices haven't loaded yet, try fetching them directly
         if (this.voices.length === 0) {
             this.voices = this.synthesis.getVoices();
         }
         return this.voices;
     }
 
-    /**
-     * Register a listener for spoken messages.
-     * Returns an unsubscribe function.
-     */
     onSpeak(callback: (text: string) => void): () => void {
         this.onSpeakListeners.push(callback);
-        // Return unsubscribe function
         return () => {
             this.onSpeakListeners = this.onSpeakListeners.filter(l => l !== callback);
         };
     }
 
-    startListening(onResult: SpeechResultCallback, onError: SpeechErrorCallback) {
+    startListening(
+        onResult: SpeechResultCallback,
+        onError: SpeechErrorCallback,
+        onInterim?: InterimCallback
+    ) {
         if (!this.recognition) {
             onError("Speech Recognition is not supported in this browser.");
             return;
         }
 
         this.recognition.onresult = (event: any) => {
-            const transcript = event.results[event.resultIndex][0].transcript;
-            onResult(transcript);
+            let interimTranscript = '';
+            let finalTranscript = '';
+
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                const transcript = event.results[i][0].transcript;
+                if (event.results[i].isFinal) {
+                    finalTranscript += transcript;
+                } else {
+                    interimTranscript += transcript;
+                }
+            }
+
+            if (interimTranscript && onInterim) {
+                onInterim(interimTranscript);
+            }
+
+            if (finalTranscript) {
+                onResult(finalTranscript);
+            }
         };
 
         this.recognition.onerror = (event: any) => {
@@ -72,13 +87,12 @@ class SpeechService {
         };
 
         this.recognition.onend = () => {
-            // recognition ended – no action needed, state is managed by App
+            // recognition ended
         };
 
         try {
             this.recognition.start();
         } catch (e) {
-            // Already started or another error – abort and restart
             this.recognition.abort();
             setTimeout(() => {
                 try { this.recognition.start(); } catch { /* ignore */ }
@@ -86,32 +100,36 @@ class SpeechService {
         }
     }
 
-    speak(text: string, voiceName?: string) {
-        // Notify all registered listeners
-        this.onSpeakListeners.forEach(listener => listener(text));
+    stopListening() {
+        if (this.recognition) {
+            try {
+                this.recognition.stop();
+            } catch { /* ignore */ }
+        }
+    }
 
-        // Cancel any ongoing speech before speaking
+    speak(text: string) {
+        this.onSpeakListeners.forEach(listener => listener(text));
         this.synthesis.cancel();
 
         const utterance = new SpeechSynthesisUtterance(text);
         const voices = this.getVoices();
 
-        if (voiceName) {
-            const selected = voices.find(v => v.name === voiceName);
-            if (selected) utterance.voice = selected;
-        } else {
-            // Default: prefer natural/female English voices
-            const preferred =
-                voices.find(v => v.name === 'Google UK English Female') ||
-                voices.find(v => v.name === 'Google US English') ||
-                voices.find(v => v.name.includes('Female')) ||
-                voices.find(v => v.name.includes('Zira')) ||
-                voices.find(v => v.name.includes('Samantha')) ||
-                voices.find(v => v.lang.startsWith('en-'));
-            if (preferred) utterance.voice = preferred;
+        const preferred =
+            voices.find(v => v.name === 'Google UK English Female') ||
+            voices.find(v => v.name === 'Google US English') ||
+            voices.find(v => v.name.includes('Aria Online (Natural)')) ||
+            voices.find(v => v.name.includes('Jenny Online (Natural)')) ||
+            voices.find(v => v.name === 'Samantha') ||
+            voices.find(v => v.name.includes('Zira')) ||
+            voices.find(v => v.name.toLowerCase().includes('female')) ||
+            voices.find(v => v.lang.startsWith('en-'));
+
+        if (preferred) {
+            utterance.voice = preferred;
         }
 
-        utterance.rate = 1;
+        utterance.rate = 1.05;
         utterance.volume = 1;
         utterance.pitch = 1.1;
 

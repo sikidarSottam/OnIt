@@ -1,9 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { speechService } from '../services/speechService';
+import React, { useState } from 'react';
 
 interface Settings {
     userName: string;
-    preferredVoice: string;
     theme: 'light' | 'dark';
 }
 
@@ -13,32 +11,10 @@ interface SettingsPanelProps {
 }
 
 const SettingsPanel: React.FC<SettingsPanelProps> = ({ onSettingsChange, onClose }) => {
-    const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
     const [settings, setSettings] = useState<Settings>({
         userName: localStorage.getItem('onit_userName') || 'Boss',
-        preferredVoice: localStorage.getItem('onit_preferredVoice') || '',
         theme: (localStorage.getItem('onit_theme') as 'light' | 'dark') || 'dark',
     });
-
-    useEffect(() => {
-        // Load voices — may be empty initially, so listen for voiceschanged
-        const loadVoices = () => {
-            const available = speechService.getVoices();
-            if (available.length > 0) {
-                setVoices(available);
-            }
-        };
-
-        loadVoices();
-
-        // Voices load asynchronously in most browsers; listen for the event
-        const handleVoicesChanged = () => loadVoices();
-        window.speechSynthesis.addEventListener('voiceschanged', handleVoicesChanged);
-
-        return () => {
-            window.speechSynthesis.removeEventListener('voiceschanged', handleVoicesChanged);
-        };
-    }, []);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -66,23 +42,6 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ onSettingsChange, onClose
                         onChange={handleChange}
                         placeholder="Enter your name..."
                     />
-                </div>
-
-                <div className="setting-item">
-                    <label htmlFor="preferredVoice">Assistant Voice</label>
-                    <select
-                        id="preferredVoice"
-                        name="preferredVoice"
-                        value={settings.preferredVoice}
-                        onChange={handleChange}
-                    >
-                        <option value="">Default (Auto)</option>
-                        {voices.map(voice => (
-                            <option key={voice.name} value={voice.name}>
-                                {voice.name} ({voice.lang})
-                            </option>
-                        ))}
-                    </select>
                 </div>
 
                 <div className="setting-item">

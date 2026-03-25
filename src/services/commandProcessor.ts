@@ -214,10 +214,9 @@ class CommandProcessor {
                 name: 'Help',
                 keywords: ['help', 'what can you do', 'commands', 'command list'],
                 action: () => {
-                    const commandList = this.commands.map(c => c.name).join(", ");
-                    speechService.speak("I can help you with many things. Some commands I understand: " + commandList);
+                    speechService.speak("I can help you with many things like playing music, opening websites, or checking the time. Just ask me what you need!");
                 },
-                description: 'Lists all available commands.'
+                description: 'Briefly explains what the assistant can do.'
             },
             {
                 name: 'Calculator',

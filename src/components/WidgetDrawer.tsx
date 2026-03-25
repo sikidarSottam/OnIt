@@ -45,7 +45,7 @@ const Calculator: React.FC = () => {
             <div className="calc-display">{display}</div>
             <div className="calc-grid">
                 <button className="calc-btn calc-clear" onClick={handleClear}>C</button>
-                {buttons.map((b) => (
+                {buttons.map((b, i) => (
                     <button
                         key={b}
                         className={`calc-btn ${['+', '-', '×', '÷'].includes(b) ? 'calc-op' : ''} ${b === '=' ? 'calc-eq' : ''}`}
@@ -54,6 +54,7 @@ const Calculator: React.FC = () => {
                             else if (['+', '-', '×', '÷'].includes(b)) handleOp(b);
                             else handleNum(b);
                         }}
+                        style={{ '--i': i } as React.CSSProperties}
                     >{b}</button>
                 ))}
             </div>
@@ -65,6 +66,40 @@ const Calculator: React.FC = () => {
 interface Note { id: string; text: string; color: string; }
 
 const noteColors = ['#fbbf24', '#34d399', '#60a5fa', '#f472b6', '#c084fc'];
+
+import { useInteractiveCard } from '../hooks/useInteractiveCard';
+
+const NoteCard: React.FC<{ 
+    note: Note, 
+    index: number, 
+    onUpdate: (id: string, text: string) => void, 
+    onRemove: (id: string) => void 
+}> = ({ note, index, onUpdate, onRemove }) => {
+    const spotlight = useInteractiveCard(10);
+    
+    return (
+        <div 
+            className="note-card spotlight shimmer-border" 
+            onMouseMove={spotlight.onMouseMove}
+            onMouseLeave={spotlight.onMouseLeave}
+            style={{ 
+                ...spotlight.style,
+                borderLeftColor: note.color, 
+                '--i': index 
+            } as React.CSSProperties}
+        >
+            <textarea
+                value={note.text}
+                onChange={(e) => onUpdate(note.id, e.target.value)}
+                placeholder="Write something..."
+                rows={4}
+            />
+            <button className="note-del" onClick={() => onRemove(note.id)}>
+                <i className="fas fa-trash-alt"></i>
+            </button>
+        </div>
+    );
+};
 
 const StickyNotes: React.FC = () => {
     const [notes, setNotes] = useState<Note[]>(() => {
@@ -102,18 +137,14 @@ const StickyNotes: React.FC = () => {
                 <i className="fas fa-plus"></i> New Note
             </button>
             <div className="notes-grid">
-                {notes.map(n => (
-                    <div key={n.id} className="note-card" style={{ borderLeftColor: n.color }}>
-                        <textarea
-                            value={n.text}
-                            onChange={(e) => updateNote(n.id, e.target.value)}
-                            placeholder="Write something..."
-                            rows={4}
-                        />
-                        <button className="note-del" onClick={() => removeNote(n.id)}>
-                            <i className="fas fa-trash-alt"></i>
-                        </button>
-                    </div>
+                {notes.map((n, i) => (
+                    <NoteCard 
+                        key={n.id} 
+                        note={n} 
+                        index={i} 
+                        onUpdate={updateNote} 
+                        onRemove={removeNote} 
+                    />
                 ))}
                 {notes.length === 0 && (
                     <p className="notes-empty">No notes yet. Click "New Note" to start!</p>
@@ -216,11 +247,12 @@ const WidgetDrawer: React.FC<WidgetDrawerProps> = ({ isOpen, onClose }) => {
                         { key: 'calculator' as WidgetTab, icon: 'fa-calculator', label: 'Calculator' },
                         { key: 'notes' as WidgetTab, icon: 'fa-sticky-note', label: 'Notes' },
                         { key: 'converter' as WidgetTab, icon: 'fa-exchange-alt', label: 'Converter' },
-                    ]).map(t => (
+                    ]).map((t, i) => (
                         <button
                             key={t.key}
                             className={`drawer-tab ${activeTab === t.key ? 'active' : ''}`}
                             onClick={() => setActiveTab(t.key)}
+                            style={{ '--i': i } as React.CSSProperties}
                         >
                             <i className={`fas ${t.icon}`}></i>
                             <span>{t.label}</span>

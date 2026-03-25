@@ -20,6 +20,7 @@ const CommandChips: React.FC<CommandChipsProps> = ({ chips }) => {
                         className="command-chip"
                         onClick={chip.action}
                         title={chip.label}
+                        style={{ '--i': i } as React.CSSProperties}
                     >
                         <i className={`fas ${chip.icon}`}></i>
                         <span>{chip.label}</span>

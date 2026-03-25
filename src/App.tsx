@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import './index.css';
 import Header from './components/Header';
+import Background3D from './components/Background3D';
 import AssistantView from './components/AssistantView';
 import InputController from './components/InputController';
 import CameraView from './components/CameraView';
@@ -237,6 +238,7 @@ function App() {
 
   return (
     <div className={`main ${focusMode ? 'focus-mode' : ''}`}>
+      <Background3D />
       {/* Offline Indicator */}
       <OfflineIndicator status={status} />
 

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useMouseSpotlight } from '../hooks/useMouseSpotlight';
 
 interface Settings {
     userName: string;
@@ -24,9 +25,16 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ onSettingsChange, onClose
         localStorage.setItem(`onit_${name}`, value);
     };
 
+    const spotlight = useMouseSpotlight();
+
     return (
         <div className="settings-overlay" role="dialog" aria-modal="true" aria-label="Settings">
-            <div className="settings-panel">
+            <div 
+                className="settings-panel spotlight"
+                onMouseMove={spotlight.onMouseMove}
+                onMouseLeave={spotlight.onMouseLeave}
+                style={spotlight.style}
+            >
                 <div className="settings-header">
                     <h2>Settings</h2>
                     <button className="close-settings" onClick={onClose} aria-label="Close settings">&times;</button>

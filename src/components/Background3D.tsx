@@ -1,122 +1,90 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useRef, useMemo } from 'react';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { Points, PointMaterial } from '@react-three/drei';
+import * as THREE from 'three';
+
+// Random points generator
+function generatePoints(count: number) {
+  const positions = new Float32Array(count * 3);
+  for (let i = 0; i < count; i++) {
+    positions[i * 3] = (Math.random() - 0.5) * 10;
+    positions[i * 3 + 1] = (Math.random() - 0.5) * 10;
+    positions[i * 3 + 2] = (Math.random() - 0.5) * 10;
+  }
+  return positions;
+}
+
+const StarField = () => {
+  const ref = useRef<THREE.Points>(null!);
+  const sphere = useMemo(() => generatePoints(3000), []);
+
+  useFrame((state, delta) => {
+    // Gentle rotation
+    ref.current.rotation.x -= delta / 10;
+    ref.current.rotation.y -= delta / 15;
+    
+    // Mouse interaction
+    const mouseX = (state.mouse.x * 0.2);
+    const mouseY = (state.mouse.y * 0.2);
+    ref.current.rotation.x += (mouseY - ref.current.rotation.x) * 0.1;
+    ref.current.rotation.y += (mouseX - ref.current.rotation.y) * 0.1;
+  });
+
+  return (
+    <group rotation={[0, 0, Math.PI / 4]}>
+      <Points ref={ref} positions={sphere} stride={3} frustumCulled={false}>
+        <PointMaterial
+          transparent
+          color="#a855f7"
+          size={0.015}
+          sizeAttenuation={true}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+        />
+      </Points>
+      {/* Secondary layer with different color and speed */}
+      <Points positions={useMemo(() => generatePoints(1500), [])} stride={3}>
+         <PointMaterial
+          transparent
+          color="#6366f1"
+          size={0.01}
+          sizeAttenuation={true}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+        />
+      </Points>
+    </group>
+  );
+};
 
 const Background3D: React.FC = () => {
-    const canvasRef = useRef<HTMLCanvasElement>(null);
-
-    useEffect(() => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-
-        let animationFrameId: number;
-        let particles: Particle[] = [];
-        const particleCount = 200;
-
-        class Particle {
-            x: number;
-            y: number;
-            z: number;
-            size: number;
-            speed: number;
-            color: string;
-
-            constructor() {
-                this.x = (Math.random() - 0.5) * 2000;
-                this.y = (Math.random() - 0.5) * 2000;
-                this.z = Math.random() * 2000;
-                this.size = Math.random() * 1.5 + 0.5;
-                this.speed = Math.random() * 0.5 + 0.2;
-                this.color = `rgba(99, 102, 241, ${Math.random() * 0.4 + 0.2})`;
-            }
-
-            update() {
-                this.z -= this.speed;
-                if (this.z <= 0) {
-                    this.z = 2000;
-                }
-            }
-
-            draw(c: HTMLCanvasElement, ct: CanvasRenderingContext2D) {
-                const scale = 500 / this.z;
-                const px = this.x * scale + c.width / 2;
-                const py = this.y * scale + c.height / 2;
-                const pSize = this.size * scale;
-
-                if (px > 0 && px < c.width && py > 0 && py < c.height) {
-                    ct.beginPath();
-                    ct.arc(px, py, pSize, 0, Math.PI * 2);
-                    ct.fillStyle = this.color;
-                    ct.fill();
-
-                    if (pSize > 2) {
-                        ct.shadowBlur = 10;
-                        ct.shadowColor = 'rgba(168, 85, 247, 0.5)';
-                    } else {
-                        ct.shadowBlur = 0;
-                    }
-                }
-            }
-        }
-
-        const resize = () => {
-            if (!canvas) return;
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            if (particles.length === 0) {
-                for (let i = 0; i < particleCount; i++) {
-                    particles.push(new Particle());
-                }
-            }
-        };
-
-        const render = () => {
-            if (!canvas || !ctx) return;
-            ctx.fillStyle = '#050505';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            const grad = ctx.createRadialGradient(
-                canvas.width / 2, canvas.height / 2, 0,
-                canvas.width / 2, canvas.height / 2, canvas.width
-            );
-            grad.addColorStop(0, 'rgba(13, 13, 17, 1)'); 
-            grad.addColorStop(1, 'rgba(5, 5, 5, 1)');
-            ctx.fillStyle = grad;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            particles.forEach(p => {
-                p.update();
-                p.draw(canvas, ctx);
-            });
-
-            animationFrameId = requestAnimationFrame(render);
-        };
-
-        window.addEventListener('resize', resize);
-        resize();
-        render();
-
-        return () => {
-            window.removeEventListener('resize', resize);
-            cancelAnimationFrame(animationFrameId);
-        };
-    }, []);
-
-    return (
-        <canvas
-            ref={canvasRef}
-            className="background-3d"
-            style={{
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                zIndex: -2,
-                background: '#050505'
-            }}
-        />
-    );
+  return (
+    <div 
+      className="background-3d-wrapper"
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        zIndex: -1,
+        background: '#050505',
+        pointerEvents: 'none'
+      }}
+    >
+      <Canvas camera={{ position: [0, 0, 1] }}>
+        <StarField />
+        <ambientLight intensity={0.5} />
+      </Canvas>
+      {/* Overlay gradient for depth */}
+      <div style={{
+          position: 'absolute',
+          inset: 0,
+          background: 'radial-gradient(circle at center, transparent 0%, rgba(5, 5, 5, 0.8) 100%)',
+          pointerEvents: 'none'
+      }} />
+    </div>
+  );
 };
 
 export default Background3D;

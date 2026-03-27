@@ -1,11 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-
-export interface ChatMessage {
-    id: string;
-    sender: 'user' | 'assistant';
-    text: string;
-    timestamp: Date;
-}
+import type { ChatMessage } from '../types';
 
 interface ChatHistoryProps {
     messages: ChatMessage[];

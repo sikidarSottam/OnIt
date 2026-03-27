@@ -1,11 +1,4 @@
-export interface SpeechRecognitionResult {
-    transcript: string;
-    isFinal: boolean;
-}
-
-export type SpeechResultCallback = (result: string) => void;
-export type SpeechErrorCallback = (error: string) => void;
-export type InterimCallback = (interimText: string) => void;
+import type { SpeechResultCallback, SpeechErrorCallback, InterimCallback } from '../types';
 
 class SpeechService {
     private recognition: any = null;

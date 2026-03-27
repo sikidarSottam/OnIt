@@ -1,10 +1,5 @@
 import React from 'react';
-
-export interface QuickChip {
-    label: string;
-    icon: string;
-    action: () => void;
-}
+import type { QuickChip } from '../types';
 
 interface CommandChipsProps {
     chips: QuickChip[];

@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import VoiceWaveform from './VoiceWaveform';
 
 interface AssistantViewProps {
@@ -21,30 +22,64 @@ function getTimeTheme(): { gradient: string; glow: string; label: string; primar
 const AssistantView: React.FC<AssistantViewProps> = ({ status }) => {
     const timeTheme = useMemo(() => getTimeTheme(), []);
     const isListening = status.toLowerCase() === 'listening';
+    const isActive = status.toLowerCase() === 'active';
 
-    const orbStyle = status.toLowerCase() === 'active'
+    const orbStyle = isActive
         ? { background: timeTheme.gradient, boxShadow: `0 0 100px ${timeTheme.glow}` }
         : {};
 
     return (
         <div className="assistant-aura-container">
-            <div
-                className={`aura-orb ${status.toLowerCase()}`}
+            <motion.div
+                className={`aura-orb ${status.toLowerCase()} holo-shimmer`}
                 style={orbStyle}
                 data-time={timeTheme.label}
-            ></div>
-            <div className="aura-ring"></div>
-            <div className="aura-ring"></div>
-            <div className="aura-ring"></div>
+                animate={isActive ? {
+                    scale: [1, 1.05, 1],
+                    rotate: [0, 5, -5, 0],
+                } : isListening ? {
+                    scale: [1, 1.1, 1],
+                } : {
+                    scale: 1,
+                    rotate: 0,
+                }}
+                transition={{
+                    duration: isActive ? 4 : 2,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                }}
+            />
+            
+            <AnimatePresence>
+                {[...Array(3)].map((_, i) => (
+                    <motion.div 
+                        key={i}
+                        className="aura-ring"
+                        initial={{ scale: 0.6, opacity: 0 }}
+                        animate={{ scale: 1.5, opacity: 0 }}
+                        transition={{ 
+                            duration: 3, 
+                            repeat: Infinity, 
+                            delay: i,
+                            ease: "linear"
+                        }}
+                    />
+                ))}
+            </AnimatePresence>
             
             <VoiceWaveform 
                 isActive={isListening} 
                 color={isListening ? '#ffffff' : timeTheme.primary} 
             />
 
-            <div className={`status-indicator ${status.toLowerCase()}`}>
+            <motion.div 
+                className={`status-indicator ${status.toLowerCase()}`}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                key={status}
+            >
                 {status}
-            </div>
+            </motion.div>
         </div>
     );
 };

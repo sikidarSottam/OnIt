@@ -13,6 +13,15 @@
   --success: #10b981;
   --danger: #ef4444;
   --warning: #f59e0b;
+  /* New Premium Tokens */
+  --holo-gradient: linear-gradient(135deg, rgba(236, 72, 153, 0.4), rgba(99, 102, 241, 0.4), rgba(6, 182, 212, 0.4));
+  --shimmer: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.12) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  --glass-effect: blur(20px) saturate(180%);
 }
 
 [data-theme="light"] {
@@ -228,6 +237,47 @@ body::after {
   justify-content: center;
   align-items: center;
   margin: 40px 0 50px;
+}
+
+/* ═══════════════════ NEW PREMIUM UTILITIES ═══════════════════ */
+.holo-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.holo-shimmer::after {
+  content: "";
+  position: absolute;
+  top: -150%;
+  left: -150%;
+  width: 300%;
+  height: 300%;
+  background: var(--shimmer);
+  transform: rotate(30deg);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  z-index: 5;
+}
+
+.holo-shimmer:hover::after {
+  opacity: 1;
+  animation: shimmerAnim 2.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes shimmerAnim {
+  0% { transform: translate(-30%, -30%) rotate(30deg); }
+  100% { transform: translate(30%, 30%) rotate(30deg); }
+}
+
+.glass-card {
+  background: var(--card-bg);
+  backdrop-filter: var(--glass-effect);
+  -webkit-backdrop-filter: var(--glass-effect);
+  border: 1px solid var(--border);
+  box-shadow: 
+    0 8px 32px 0 rgba(0, 0, 0, 0.37),
+    inset 0 0 8px 0 rgba(255, 255, 255, 0.05);
 }
 
 .aura-orb {

@@ -1,16 +1,17 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { AnimatePresence } from 'framer-motion';
 import './index.css';
+import type { ChatMessage, QuickChip, AppStatus } from './types';
+import { STORAGE_KEYS, DEFAULT_USER_NAME, DEFAULT_THEME } from './constants';
 import Header from './components/Header';
 import Background3D from './components/Background3D';
 import AssistantView from './components/AssistantView';
 import InputController from './components/InputController';
 import CameraView from './components/CameraView';
-import type { ChatMessage } from './components/ChatHistory';
 import ChatHistory from './components/ChatHistory';
 import SettingsPanel from './components/SettingsPanel';
 import WidgetDrawer from './components/WidgetDrawer';
 import CommandChips from './components/CommandChips';
-import type { QuickChip } from './components/CommandChips';
 import OfflineIndicator from './components/OfflineIndicator';
 import KeyboardShortcuts from './components/KeyboardShortcuts';
 import { speechService } from './services/speechService';
@@ -24,8 +25,8 @@ function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [isStarted, setIsStarted] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [status, setStatus] = useState<"Idle" | "Active" | "Listening">("Idle");
-  const [userName, setUserName] = useState(localStorage.getItem('onit_userName') || 'Boss');
+  const [status, setStatus] = useState<AppStatus>("Idle");
+  const [userName, setUserName] = useState(localStorage.getItem(STORAGE_KEYS.USER_NAME) || DEFAULT_USER_NAME);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   // New features state
@@ -166,11 +167,11 @@ function App() {
   const handleSettingsChange = (settings: { userName: string; theme: string }) => {
     setUserName(settings.userName);
     document.body.setAttribute('data-theme', settings.theme);
-    localStorage.setItem('onit_theme', settings.theme);
+    localStorage.setItem(STORAGE_KEYS.THEME, settings.theme);
   };
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem('onit_theme') || 'dark';
+    const savedTheme = localStorage.getItem(STORAGE_KEYS.THEME) || DEFAULT_THEME;
     document.body.setAttribute('data-theme', savedTheme);
   }, []);
 
@@ -270,15 +271,19 @@ function App() {
         </button>
       </div>
 
-      {showSettings && (
-        <SettingsPanel
-          onSettingsChange={handleSettingsChange}
-          onClose={() => setShowSettings(false)}
-        />
-      )}
+      <AnimatePresence>
+        {showSettings && (
+          <SettingsPanel
+            onSettingsChange={handleSettingsChange}
+            onClose={() => setShowSettings(false)}
+          />
+        )}
+      </AnimatePresence>
 
       <WidgetDrawer isOpen={showWidgetDrawer} onClose={() => setShowWidgetDrawer(false)} />
-      <KeyboardShortcuts isOpen={showShortcuts} onClose={() => setShowShortcuts(false)} />
+      <AnimatePresence>
+        {showShortcuts && <KeyboardShortcuts onClose={() => setShowShortcuts(false)} />}
+      </AnimatePresence>
 
       {!isStarted ? (
         <div className="start-screen">

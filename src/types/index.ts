@@ -26,7 +26,7 @@ export type WidgetTab = 'calculator' | 'notes' | 'converter';
 export interface Command {
     name: string;
     keywords: string[];
-    action: (args?: any) => void;
+    action: (args?: any) => void | Promise<void>;
     description?: string;
 }
 export interface SpeechRecognitionResult {

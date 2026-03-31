@@ -210,6 +210,76 @@ export const defaultCommands: Command[] = [
         description: 'Opens the system calculator.'
     },
     {
+        name: 'Weather',
+        keywords: ['weather in', 'weather of', 'weather for', 'current weather', 'whats the weather', 'what is the weather', 'weather'],
+        action: async (arg?: any) => {
+            const message = typeof arg === 'string' ? arg : '';
+            // Extract location: look for "weather" and take what follows, stripping common connectors
+            const match = message.match(/weather\s+(?:in|of|at|for|like in)?\s*(.+)/i);
+            let location = match ? match[1].trim() : "";
+            
+            // If the message is just "weather" or empty, location remains empty
+            if (message.trim() === "weather") location = "";
+
+            try {
+                if (location) {
+                    speechService.speak(`Checking the deep weather for ${location}...`);
+
+                    // Use Open-Meteo for specific city searches with more parameters
+                    const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(location)}&count=1&language=en&format=json`);
+                    const geoData = await geoRes.json();
+
+                    if (!geoData.results || geoData.results.length === 0) {
+                        speechService.speak(`Sorry, I couldn't find the location ${location}.`);
+                        return;
+                    }
+
+                    const { latitude, longitude, name, country } = geoData.results[0];
+                    const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m&daily=uv_index_max&timezone=auto`);
+                    const weatherData = await weatherRes.json();
+
+                    const current = weatherData.current;
+                    if (!current) throw new Error("No weather data returned");
+                    
+                    const condition = getWeatherDescription(current.weather_code);
+                    const uvIndexMax = weatherData.daily?.uv_index_max?.[0] || 'low';
+                    
+                    speechService.speak(
+                        `Currently in ${name}, ${country}, it's ${condition}. ` +
+                        `The temperature is ${Math.round(current.temperature_2m)} degrees Celsius, but it feels like ${Math.round(current.apparent_temperature)} degrees. ` +
+                        `Humidity is at ${current.relative_humidity_2m} percent, with a wind speed of ${Math.round(current.wind_speed_10m)} kilometers per hour. ` +
+                        `The UV index for today will reach a maximum of ${uvIndexMax}.`
+                    );
+                } else {
+                    // Use wttr.in for automatic location detection based on IP with all params
+                    speechService.speak("Fetching comprehensive local weather...");
+                    const res = await fetch(`https://wttr.in/?format=j1`);
+                    const data = await res.json();
+                    
+                    if (!data.current_condition || !data.nearest_area) {
+                        throw new Error("Invalid weather data");
+                    }
+
+                    const city = data.nearest_area[0]?.areaName?.[0]?.value || "your current area";
+                    const current = data.current_condition[0];
+                    const desc = current.weatherDesc?.[0]?.value || "unspecified conditions";
+                    const uv = current.uvIndex || "unknown";
+
+                    speechService.speak(
+                        `In ${city}, it's ${desc}. ` +
+                        `Temperature is ${current.temp_C} degrees Celsius, feeling like ${current.FeelsLikeC} degrees. ` +
+                        `Humidity is ${current.humidity} percent, and wind speed is ${current.windspeedKmph} kilometers per hour. ` +
+                        `The UV index is currently ${uv}.`
+                    );
+                }
+            } catch (error) {
+                console.error("Weather Service Error:", error);
+                speechService.speak("I'm sorry, I couldn't fetch the full weather details at this moment.");
+            }
+        },
+        description: 'Gets comprehensive weather details (temp, humidity, feels-like, uv index).'
+    },
+    {
         name: 'Search',
         keywords: ['what is', 'who is', 'what are', 'tell me about'],
         action: (arg?: any) => {
@@ -220,3 +290,41 @@ export const defaultCommands: Command[] = [
         description: 'Searches Google for information.'
     },
 ];
+
+/**
+ * Interprets WMO Weather interpretation codes (WW)
+ * https://open-meteo.com/en/docs
+ */
+function getWeatherDescription(code: number): string {
+    const descriptions: Record<number, string> = {
+        0: 'clear skies',
+        1: 'mainly clear skies',
+        2: 'partly cloudy',
+        3: 'overcast',
+        45: 'foggy',
+        48: 'depositing rime fog',
+        51: 'light drizzle',
+        53: 'moderate drizzle',
+        55: 'dense drizzle',
+        56: 'light freezing drizzle',
+        57: 'dense freezing drizzle',
+        61: 'slight rain',
+        63: 'moderate rain',
+        65: 'heavy rain',
+        66: 'light freezing rain',
+        67: 'heavy freezing rain',
+        71: 'slight snow fall',
+        73: 'moderate snow fall',
+        75: 'heavy snow fall',
+        77: 'snow grains',
+        80: 'slight rain showers',
+        81: 'moderate rain showers',
+        82: 'violent rain showers',
+        85: 'slight snow showers',
+        86: 'heavy snow showers',
+        95: 'a slight thunderstorm',
+        96: 'a thunderstorm with slight hail',
+        99: 'a thunderstorm with heavy hail',
+    };
+    return descriptions[code] || 'unspecified weather conditions';
+}

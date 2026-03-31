@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import './index.css';
 import type { ChatMessage, QuickChip, AppStatus } from './types';
 import { STORAGE_KEYS, DEFAULT_USER_NAME, DEFAULT_THEME } from './constants';
@@ -19,6 +19,7 @@ import { cameraService } from './services/cameraService';
 import { commandProcessor } from './services/commandProcessor';
 
 function App() {
+  // ... (state and handlers remain same)
   const [messageContent, setMessageContent] = useState("Click 'Start' to wake me up!");
   const [inputValue, setInputValue] = useState("");
   const [showCamera, setShowCamera] = useState(false);
@@ -60,6 +61,16 @@ function App() {
       });
     }
   }, [addMessage]);
+
+  useEffect(() => {
+    const handleGlobalMouseMove = (e: MouseEvent) => {
+      document.documentElement.style.setProperty('--cursor-x', `${e.clientX}px`);
+      document.documentElement.style.setProperty('--cursor-y', `${e.clientY}px`);
+    };
+
+    window.addEventListener('mousemove', handleGlobalMouseMove);
+    return () => window.removeEventListener('mousemove', handleGlobalMouseMove);
+  }, []);
 
   const wishMe = useCallback((name: string) => {
     const hour = new Date().getHours();
@@ -246,40 +257,102 @@ function App() {
     { label: 'Help', icon: 'fa-question-circle', action: () => { commandProcessor.processCommand('help'); } },
   ];
 
+  const isOverlayOpen = showSettings || showWidgetDrawer || showShortcuts;
+
   return (
     <div className={`main ${focusMode ? 'focus-mode' : ''}`}>
       <Background3D />
-      {/* Offline Indicator */}
-      <OfflineIndicator status={status} />
+      <div className="cursor-light" />
+      
+      {/* Dashboard Content with Scale/Blur Effect */}
+      <motion.div 
+        className="dashboard-wrapper"
+        style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+        animate={{
+          scale: isOverlayOpen ? 0.95 : 1,
+          filter: isOverlayOpen ? 'blur(10px) brightness(0.6)' : 'blur(0px) brightness(1)',
+          pointerEvents: isOverlayOpen ? 'none' : 'auto'
+        }}
+        transition={{
+          type: 'spring',
+          stiffness: 260,
+          damping: 25
+        }}
+      >
+        <OfflineIndicator status={status} />
 
-      {/* Top bar buttons */}
-      <div className="top-bar">
-        <button
-          className="top-btn"
-          onClick={() => setShowWidgetDrawer(true)}
-          aria-label="Open toolbox"
-          title="Toolbox (Ctrl+T)"
-        >
-          <i className="fas fa-th-large"></i>
-        </button>
-        <button
-          className={`top-btn ${focusMode ? 'active' : ''}`}
-          onClick={() => setFocusMode(!focusMode)}
-          aria-label="Toggle focus mode"
-          title="Focus Mode (Ctrl+F)"
-        >
-          <i className="fas fa-expand"></i>
-        </button>
-        <button
-          className="top-btn"
-          onClick={() => setShowSettings(true)}
-          aria-label="Open settings"
-          title="Settings"
-        >
-          <i className="fas fa-cog"></i>
-        </button>
-      </div>
+        <div className="top-bar">
+          <button
+            className="top-btn"
+            onClick={() => setShowWidgetDrawer(true)}
+            aria-label="Open toolbox"
+            title="Toolbox (Ctrl+T)"
+          >
+            <i className="fas fa-th-large"></i>
+          </button>
+          <button
+            className={`top-btn ${focusMode ? 'active' : ''}`}
+            onClick={() => setFocusMode(!focusMode)}
+            aria-label="Toggle focus mode"
+            title="Focus Mode (Ctrl+F)"
+          >
+            <i className="fas fa-expand"></i>
+          </button>
+          <button
+            className="top-btn"
+            onClick={() => setShowSettings(true)}
+            aria-label="Open settings"
+            title="Settings"
+          >
+            <i className="fas fa-cog"></i>
+          </button>
+        </div>
 
+        {!isStarted ? (
+          <div className="start-screen">
+            <Header />
+            <AssistantView status="Idle" />
+            <button className="start-button" onClick={handleStart} aria-label="Start the assistant">
+              Start Assistant
+            </button>
+            <p className="start-hint">Or press <kbd>Enter</kbd></p>
+          </div>
+        ) : (
+          <>
+            {!focusMode && <Header />}
+            <AssistantView status={status} />
+
+            {!focusMode && (
+              <>
+                <CommandChips chips={quickChips} />
+                <ChatHistory messages={messages} onRerun={handleRerun} />
+                
+                {showCamera && (
+                  <CameraView
+                    videoRef={videoRef}
+                    onClose={handleCloseCamera}
+                  />
+                )}
+              </>
+            )}
+
+            <InputController
+              messageContent={messageContent}
+              inputValue={inputValue}
+              liveTranscript={liveTranscript}
+              isListening={status === 'Listening'}
+              isSpeaking={isSpeaking}
+              onInputChange={setInputValue}
+              onMicClick={handleMicClick}
+              onSend={handleSend}
+              onStopSpeech={handleStopSpeech}
+              inputRef={inputRef}
+            />
+          </>
+        )}
+      </motion.div>
+
+      {/* Overlays (Stay sharp and atop the dashboard) */}
       <AnimatePresence>
         {showSettings && (
           <SettingsPanel
@@ -290,53 +363,10 @@ function App() {
       </AnimatePresence>
 
       <WidgetDrawer isOpen={showWidgetDrawer} onClose={() => setShowWidgetDrawer(false)} />
+      
       <AnimatePresence>
         {showShortcuts && <KeyboardShortcuts onClose={() => setShowShortcuts(false)} />}
       </AnimatePresence>
-
-      {!isStarted ? (
-        <div className="start-screen">
-          <Header />
-          <AssistantView status="Idle" />
-          <button className="start-button" onClick={handleStart} aria-label="Start the assistant">
-            Start Assistant
-          </button>
-          <p className="start-hint">Or press <kbd>Enter</kbd></p>
-        </div>
-      ) : (
-        <>
-          {!focusMode && <Header />}
-          <AssistantView status={status} />
-
-          {!focusMode && (
-            <>
-              <CommandChips chips={quickChips} />
-
-              <ChatHistory messages={messages} onRerun={handleRerun} />
-
-              {showCamera && (
-                <CameraView
-                  videoRef={videoRef}
-                  onClose={handleCloseCamera}
-                />
-              )}
-            </>
-          )}
-
-          <InputController
-            messageContent={messageContent}
-            inputValue={inputValue}
-            liveTranscript={liveTranscript}
-            isListening={status === 'Listening'}
-            isSpeaking={isSpeaking}
-            onInputChange={setInputValue}
-            onMicClick={handleMicClick}
-            onSend={handleSend}
-            onStopSpeech={handleStopSpeech}
-            inputRef={inputRef}
-          />
-        </>
-      )}
     </div>
   );
 }

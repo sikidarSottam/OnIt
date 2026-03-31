@@ -21,7 +21,8 @@
     rgba(255, 255, 255, 0.12) 50%,
     rgba(255, 255, 255, 0) 100%
   );
-  --glass-effect: blur(20px) saturate(180%);
+  --noise-bg: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  --holo-border: conic-gradient(from 0deg at 50% 50%, #6366f1, #a855f7, #ec4899, #06b6d4, #6366f1);
 }
 
 [data-theme="light"] {
@@ -116,6 +117,20 @@ body::after {
   position: relative;
   z-index: 1;
   transition: all 0.5s ease;
+}
+
+.cursor-light {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1; /* Behind main but potentially above body::before */
+  background: radial-gradient(
+    800px circle at var(--cursor-x, 50%) var(--cursor-y, 50%),
+    rgba(168, 85, 247, 0.12),
+    transparent 70%
+  );
+  filter: blur(100px);
+  opacity: 0.8;
 }
 
 .main.focus-mode {
@@ -272,12 +287,51 @@ body::after {
 
 .glass-card {
   background: var(--card-bg);
+  background-image: var(--noise-bg);
+  background-blend-mode: overlay;
   backdrop-filter: var(--glass-effect);
   -webkit-backdrop-filter: var(--glass-effect);
   border: 1px solid var(--border);
   box-shadow: 
     0 8px 32px 0 rgba(0, 0, 0, 0.37),
     inset 0 0 8px 0 rgba(255, 255, 255, 0.05);
+}
+
+.holo-card {
+  position: relative;
+  background: var(--card-bg);
+  background-image: var(--noise-bg);
+  background-blend-mode: overlay;
+  backdrop-filter: var(--glass-effect);
+  -webkit-backdrop-filter: var(--glass-effect);
+  border-radius: 24px;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.holo-card::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  background: var(--holo-border);
+  z-index: -1;
+  animation: rotateHolo 4s linear infinite;
+  opacity: 0.3;
+  filter: blur(1px);
+}
+
+.holo-card::after {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  background: inherit;
+  border-radius: 23px;
+  z-index: -1;
+}
+
+@keyframes rotateHolo {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .aura-orb {
@@ -512,7 +566,9 @@ body::after {
 /* ═══════════════════ RESPONSE AREA ═══════════════════ */
 .response-container {
   background: var(--card-bg);
-  backdrop-filter: blur(20px);
+  background-image: var(--noise-bg);
+  background-blend-mode: soft-light;
+  backdrop-filter: blur(25px);
   border: 1px solid var(--border);
   border-radius: 24px;
   width: 90%;
@@ -520,14 +576,27 @@ body::after {
   margin: 10px auto 20px;
   padding: 24px 32px;
   box-shadow:
-    0 20px 50px rgba(0, 0, 0, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    0 30px 60px rgba(0, 0, 0, 0.5),
+    inset 0 0 20px rgba(255, 255, 255, 0.05);
   transition: all 0.4s ease;
   min-height: 70px;
   display: flex;
   justify-content: center;
   align-items: center;
   text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.response-container::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--holo-border);
+  opacity: 0.05;
+  mix-blend-mode: color-dodge;
+  animation: rotateHolo 8s linear infinite reverse;
+  pointer-events: none;
 }
 
 .content {

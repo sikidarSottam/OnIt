@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import type { ChatMessage } from '../types';
 
 interface ChatHistoryProps {
@@ -27,27 +28,40 @@ const ChatHistory: React.FC<ChatHistoryProps> = ({ messages, onRerun }) => {
     return (
         <div className="chat-history-container">
             <div className="chat-messages">
-                {messages.map((msg) => (
-                    <div key={msg.id} className={`chat-message ${msg.sender}`}>
-                        <div className="message-content-text">
-                            {msg.text}
-                        </div>
-                        <div className="message-footer">
-                            <span className="message-time">
-                                {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                            </span>
-                            {msg.sender === 'user' && onRerun && (
-                                <button
-                                    className="rerun-btn"
-                                    onClick={() => onRerun(msg.text)}
-                                    title="Re-run this command"
-                                >
-                                    <i className="fas fa-redo-alt"></i>
-                                </button>
-                            )}
-                        </div>
-                    </div>
-                ))}
+                <AnimatePresence initial={false}>
+                    {messages.map((msg) => (
+                        <motion.div 
+                            key={msg.id} 
+                            className={`chat-message ${msg.sender}`}
+                            initial={{ opacity: 0, scale: 0.8, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.5, transition: { duration: 0.2 } }}
+                            transition={{
+                                type: 'spring',
+                                stiffness: 260,
+                                damping: 20,
+                            }}
+                        >
+                            <div className="message-content-text">
+                                {msg.text}
+                            </div>
+                            <div className="message-footer">
+                                <span className="message-time">
+                                    {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                                {msg.sender === 'user' && onRerun && (
+                                    <button
+                                        className="rerun-btn"
+                                        onClick={() => onRerun(msg.text)}
+                                        title="Re-run this command"
+                                    >
+                                        <i className="fas fa-redo-alt"></i>
+                                    </button>
+                                )}
+                            </div>
+                        </motion.div>
+                    ))}
+                </AnimatePresence>
                 <div ref={bottomRef} />
             </div>
         </div>

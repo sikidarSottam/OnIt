@@ -6,9 +6,11 @@ interface InputControllerProps {
     inputValue: string;
     liveTranscript?: string;
     isListening?: boolean;
+    isSpeaking?: boolean;
     onInputChange: (value: string) => void;
     onMicClick: () => void;
     onSend: () => void;
+    onStopSpeech?: () => void;
     inputRef?: React.RefObject<HTMLInputElement | null>;
 }
 
@@ -17,9 +19,11 @@ const InputController: React.FC<InputControllerProps> = ({
     inputValue,
     liveTranscript,
     isListening,
+    isSpeaking,
     onInputChange,
     onMicClick,
     onSend,
+    onStopSpeech,
     inputRef,
 }) => {
     const [bloomAction, setBloomAction] = useState(false);
@@ -63,6 +67,17 @@ const InputController: React.FC<InputControllerProps> = ({
                         <span className="live-transcript"> {liveTranscript}</span>
                     )}
                 </div>
+                {isSpeaking && (
+                    <button 
+                        className="stop-speech-btn pulse" 
+                        onClick={onStopSpeech}
+                        title="Stop assistant speaking"
+                        aria-label="Stop speech"
+                    >
+                        <i className="fas fa-volume-mute"></i>
+                        <span>Stop</span>
+                    </button>
+                )}
             </div>
 
             <div className="mic-wrapper">

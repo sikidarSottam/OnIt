@@ -34,6 +34,7 @@ function App() {
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
   const [liveTranscript, setLiveTranscript] = useState('');
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const speakListenerRegistered = useRef(false);
@@ -53,6 +54,9 @@ function App() {
       speakListenerRegistered.current = true;
       speechService.onSpeak((text) => {
         addMessage(text, 'assistant');
+      });
+      speechService.onStatusChange((speaking) => {
+        setIsSpeaking(speaking);
       });
     }
   }, [addMessage]);
@@ -119,7 +123,6 @@ function App() {
     }
   };
 
-  // Re-run a previous command from chat history
   const handleRerun = (text: string) => {
     setMessageContent(text);
     addMessage(text, 'user');
@@ -145,6 +148,11 @@ function App() {
     cameraService.stopCamera();
     setShowCamera(false);
     speechService.speak("Camera is closed.");
+  };
+
+  const handleStopSpeech = () => {
+    speechService.cancelSpeech();
+    setIsSpeaking(false);
   };
 
   const handleOpenCameraRef = useRef(handleOpenCamera);
@@ -192,6 +200,7 @@ function App() {
         setShowShortcuts(false);
         setShowWidgetDrawer(false);
         setShowSettings(false);
+        handleStopSpeech();
         if (focusMode) setFocusMode(false);
         return;
       }
@@ -228,10 +237,10 @@ function App() {
   // Quick-action chips
   const quickChips: QuickChip[] = [
     { label: 'Time', icon: 'fa-clock', action: () => { commandProcessor.processCommand('what time'); } },
-    { label: 'Date', icon: 'fa-calendar', action: () => { commandProcessor.processCommand('what date'); } },
-    { label: 'Camera', icon: 'fa-camera', action: () => { handleOpenCameraRef.current(); } },
+    { label: 'Weather', icon: 'fa-cloud-sun', action: () => { commandProcessor.processCommand('weather'); } },
+    { label: 'Quick Advice', icon: 'fa-lightbulb', action: () => { commandProcessor.processCommand('advice'); } },
     { label: 'YouTube', icon: 'fa-play', action: () => { commandProcessor.processCommand('open youtube'); } },
-    { label: 'Google', icon: 'fa-search', action: () => { commandProcessor.processCommand('open google'); } },
+    { label: 'Camera', icon: 'fa-camera', action: () => { handleOpenCameraRef.current(); } },
     { label: 'Joke', icon: 'fa-laugh', action: () => { commandProcessor.processCommand('tell me a joke'); } },
     { label: 'Toolbox', icon: 'fa-toolbox', action: () => { setShowWidgetDrawer(true); } },
     { label: 'Help', icon: 'fa-question-circle', action: () => { commandProcessor.processCommand('help'); } },
@@ -319,9 +328,11 @@ function App() {
             inputValue={inputValue}
             liveTranscript={liveTranscript}
             isListening={status === 'Listening'}
+            isSpeaking={isSpeaking}
             onInputChange={setInputValue}
             onMicClick={handleMicClick}
             onSend={handleSend}
+            onStopSpeech={handleStopSpeech}
             inputRef={inputRef}
           />
         </>

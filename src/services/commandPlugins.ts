@@ -46,9 +46,49 @@ export const defaultCommands: Command[] = [
     },
     {
         name: 'Joke',
-        keywords: ['tell me a joke'],
-        action: () => speechService.speak("Why don't scientists trust atoms? Because they make up everything!"),
-        description: 'Tells a joke.'
+        keywords: ['tell me a joke', 'tell a joke', 'joke'],
+        action: async () => {
+            try {
+                // Fetch random joke
+                const res = await fetch("https://official-joke-api.appspot.com/random_joke");
+                const data = await res.json();
+                
+                if (data.setup && data.punchline) {
+                    speechService.speak(data.setup);
+                    
+                    // Wait for the setup to finish then deliver the punchline
+                    setTimeout(() => {
+                        speechService.speak(data.punchline);
+                    }, 3000); // 3-second delay for best delivery
+                } else {
+                    speechService.speak("Why don't scientists trust atoms? Because they make up everything!");
+                }
+            } catch (error) {
+                console.error("Joke API Error:", error);
+                speechService.speak("Why don't scientists trust atoms? Because they make up everything!");
+            }
+        },
+        description: 'Tells a random joke fetched from the internet.'
+    },
+    {
+        name: 'Advice',
+        keywords: ['give me some advice', 'advice', 'tell me something wise', 'give me advice'],
+        action: async () => {
+            try {
+                // Fetch random advice
+                const res = await fetch("https://api.adviceslip.com/advice");
+                const data = await res.json();
+                if (data.slip && data.slip.advice) {
+                    speechService.speak("Here is a bit of advice: " + data.slip.advice);
+                } else {
+                    speechService.speak("I don't have any advice right now, but I'm here for you!");
+                }
+            } catch (error) {
+                console.error("Advice API Error:", error);
+                speechService.speak("I'm sorry, I couldn't reach the advice service right now.");
+            }
+        },
+        description: 'Shares a random piece of advice or wisdom.'
     },
     {
         name: 'Open Google',
@@ -256,19 +296,15 @@ export const defaultCommands: Command[] = [
                     const res = await fetch(`https://wttr.in/?format=j1`);
                     const data = await res.json();
                     
-                    if (!data.current_condition || !data.nearest_area) {
-                        throw new Error("Invalid weather data");
-                    }
-
-                    const city = data.nearest_area[0]?.areaName?.[0]?.value || "your current area";
-                    const current = data.current_condition[0];
-                    const desc = current.weatherDesc?.[0]?.value || "unspecified conditions";
-                    const uv = current.uvIndex || "unknown";
+                    const city = data?.nearest_area?.[0]?.areaName?.[0]?.value || "your current area";
+                    const current = data?.current_condition?.[0] || {};
+                    const desc = current?.weatherDesc?.[0]?.value || "unspecified conditions";
+                    const uv = current?.uvIndex || "unknown";
 
                     speechService.speak(
                         `In ${city}, it's ${desc}. ` +
-                        `Temperature is ${current.temp_C} degrees Celsius, feeling like ${current.FeelsLikeC} degrees. ` +
-                        `Humidity is ${current.humidity} percent, and wind speed is ${current.windspeedKmph} kilometers per hour. ` +
+                        `Temperature is ${current?.temp_C || 'unknown'} degrees Celsius, feeling like ${current?.FeelsLikeC || 'unknown'} degrees. ` +
+                        `Humidity is ${current?.humidity || 'unknown'} percent, and wind speed is ${current?.windspeedKmph || 'unknown'} kilometers per hour. ` +
                         `The UV index is currently ${uv}.`
                     );
                 }
@@ -281,13 +317,43 @@ export const defaultCommands: Command[] = [
     },
     {
         name: 'Search',
-        keywords: ['what is', 'who is', 'what are', 'tell me about'],
-        action: (arg?: any) => {
+        keywords: ['what is', 'who is', 'what are', 'tell me about', 'lookup', 'search for'],
+        action: async (arg?: any) => {
             const message = typeof arg === 'string' ? arg : '';
-            window.open(`https://www.google.com/search?q=${encodeURIComponent(message)}`, "_blank");
-            speechService.speak("This is what I found on the internet regarding " + message);
+            const query = message.replace(/(?:what is|who is|what are|tell me about|lookup|search for)\s+/i, '').trim();
+
+            if (!query) {
+                speechService.speak("What would you like me to look up?");
+                return;
+            }
+
+            try {
+                speechService.speak(`Looking up ${query}...`);
+
+                // 1. Try Wikipedia Summary API
+                const wikiRes = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(query.replace(/\s+/g, '_'))}`);
+                
+                if (wikiRes.ok) {
+                    const data = await wikiRes.json();
+                    if (data.type === 'standard' && data.extract) {
+                        speechService.speak(`According to Wikipedia: ${data.extract}`);
+                        // Optionally open the page in background for users to read more
+                        // window.open(data.content_urls.desktop.page, "_blank");
+                        return;
+                    }
+                }
+                
+                // 2. If Wikipedia fails, Fallback to Google Search
+                window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}`, "_blank");
+                speechService.speak(`I couldn't find a direct Wikipedia article for ${query}, so I've opened a Google search for you.`);
+                
+            } catch (error) {
+                console.error("Search API Error:", error);
+                window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}`, "_blank");
+                speechService.speak(`I've opened a Google search for ${query}.`);
+            }
         },
-        description: 'Searches Google for information.'
+        description: 'Searches Wikipedia for summaries or falls back to Google.'
     },
 ];
 

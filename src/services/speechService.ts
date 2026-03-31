@@ -5,6 +5,10 @@ class SpeechService {
     private synthesis: SpeechSynthesis = window.speechSynthesis;
     private voices: SpeechSynthesisVoice[] = [];
     private onSpeakListeners: ((text: string) => void)[] = [];
+    
+    // Status tracking
+    private isCurrentlySpeaking: boolean = false;
+    private onStatusListeners: ((isSpeaking: boolean) => void)[] = [];
 
     constructor() {
         const SpeechRecognitionAPI =
@@ -14,7 +18,7 @@ class SpeechService {
         if (SpeechRecognitionAPI) {
             this.recognition = new SpeechRecognitionAPI();
             this.recognition.continuous = false;
-            this.recognition.interimResults = true; // Enable interim results for live transcript
+            this.recognition.interimResults = true;
             this.recognition.lang = 'en-US';
         }
 
@@ -34,6 +38,22 @@ class SpeechService {
             this.voices = this.synthesis.getVoices();
         }
         return this.voices;
+    }
+
+    private setSpeaking(val: boolean) {
+        this.isCurrentlySpeaking = val;
+        this.onStatusListeners.forEach(l => l(val));
+    }
+
+    get isSpeaking(): boolean {
+        return this.isCurrentlySpeaking;
+    }
+
+    onStatusChange(callback: (isSpeaking: boolean) => void): () => void {
+        this.onStatusListeners.push(callback);
+        return () => {
+            this.onStatusListeners = this.onStatusListeners.filter(l => l !== callback);
+        };
     }
 
     onSpeak(callback: (text: string) => void): () => void {
@@ -79,10 +99,6 @@ class SpeechService {
             onError(event.error as string);
         };
 
-        this.recognition.onend = () => {
-            // recognition ended
-        };
-
         try {
             this.recognition.start();
         } catch (e) {
@@ -103,7 +119,7 @@ class SpeechService {
 
     speak(text: string) {
         this.onSpeakListeners.forEach(listener => listener(text));
-        this.synthesis.cancel();
+        this.cancelSpeech();
 
         const utterance = new SpeechSynthesisUtterance(text);
         const voices = this.getVoices();
@@ -111,11 +127,6 @@ class SpeechService {
         const preferred =
             voices.find(v => v.name === 'Google UK English Female') ||
             voices.find(v => v.name === 'Google US English') ||
-            voices.find(v => v.name.includes('Aria Online (Natural)')) ||
-            voices.find(v => v.name.includes('Jenny Online (Natural)')) ||
-            voices.find(v => v.name === 'Samantha') ||
-            voices.find(v => v.name.includes('Zira')) ||
-            voices.find(v => v.name.toLowerCase().includes('female')) ||
             voices.find(v => v.lang.startsWith('en-'));
 
         if (preferred) {
@@ -123,14 +134,17 @@ class SpeechService {
         }
 
         utterance.rate = 1.05;
-        utterance.volume = 1;
-        utterance.pitch = 1.1;
+        
+        utterance.onstart = () => this.setSpeaking(true);
+        utterance.onend = () => this.setSpeaking(false);
+        utterance.onerror = () => this.setSpeaking(false);
 
         this.synthesis.speak(utterance);
     }
 
     cancelSpeech() {
         this.synthesis.cancel();
+        this.setSpeaking(false);
     }
 }
 

@@ -17,11 +17,11 @@ class CommandProcessor {
         defaultCommands.forEach(p => this.registerCommand(p));
     }
 
-    processCommand(message: string) {
+    async processCommand(message: string) {
         // Normalize to lowercase for matching, but keep original for display/action
         const lowercaseMsg = message.toLowerCase().trim();
 
-        // Find first matching plugin
+        // Find first matching plugin 
         const matchedPlugin = this.commands.find(plugin =>
             plugin.keywords.some(keyword => lowercaseMsg.includes(keyword.toLowerCase()))
         );
@@ -30,9 +30,27 @@ class CommandProcessor {
             // Pass the lowercased message to actions so they don't need to re-lowercase
             matchedPlugin.action(lowercaseMsg);
         } else {
-            // Default: Google Search
-            window.open(`https://www.google.com/search?q=${encodeURIComponent(message)}`, "_blank");
-            speechService.speak("I found some information for " + message + " on Google.");
+            // Intelligent Fallback: Check Wikipedia first
+            try {
+                // Try Wikipedia summary for the message
+                const wikiRes = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(message.replace(/\s+/g, '_'))}`);
+                
+                if (wikiRes.ok) {
+                    const data = await wikiRes.json();
+                    if (data.type === 'standard' && data.extract) {
+                        speechService.speak(`I found some information on ${message}: ${data.extract}`);
+                        return;
+                    }
+                }
+                
+                // Final Fallback: Google Search
+                window.open(`https://www.google.com/search?q=${encodeURIComponent(message)}`, "_blank");
+                speechService.speak("I found some information for " + message + " on Google.");
+            } catch (error) {
+                console.error("Processor Fallback Error:", error);
+                window.open(`https://www.google.com/search?q=${encodeURIComponent(message)}`, "_blank");
+                speechService.speak("I found some information for " + message + " on Google.");
+            }
         }
     }
 

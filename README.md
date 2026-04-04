@@ -1,7 +1,5 @@
 # 🌌 OnIt - The Future of Virtual Assistance
 
-![OnIt Hero Banner](./onit_hero_banner.png)
-
 **OnIt** is a next-generation, immersive virtual assistant designed to elevate your productivity with a premium, high-impact aesthetic. Marrying cutting-edge 3D visuals with intuitive voice and text interaction, OnIt isn't just a tool—it's a living interface.
 
 ---

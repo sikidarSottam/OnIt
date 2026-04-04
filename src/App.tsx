@@ -14,12 +14,12 @@ import WidgetDrawer from './components/WidgetDrawer';
 import CommandChips from './components/CommandChips';
 import OfflineIndicator from './components/OfflineIndicator';
 import KeyboardShortcuts from './components/KeyboardShortcuts';
+import Navbar from './components/Navbar';
 import { speechService } from './services/speechService';
 import { cameraService } from './services/cameraService';
 import { commandProcessor } from './services/commandProcessor';
 
 function App() {
-  // ... (state and handlers remain same)
   const [messageContent, setMessageContent] = useState("Click 'Start' to wake me up!");
   const [inputValue, setInputValue] = useState("");
   const [showCamera, setShowCamera] = useState(false);
@@ -38,8 +38,6 @@ function App() {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const speakListenerRegistered = useRef(false);
-
   const addMessage = useCallback((text: string, sender: 'user' | 'assistant') => {
     const newMessage: ChatMessage = {
       id: Math.random().toString(36).substr(2, 9),
@@ -51,15 +49,18 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (!speakListenerRegistered.current) {
-      speakListenerRegistered.current = true;
-      speechService.onSpeak((text) => {
-        addMessage(text, 'assistant');
-      });
-      speechService.onStatusChange((speaking) => {
-        setIsSpeaking(speaking);
-      });
-    }
+    const unsubSpeak = speechService.onSpeak((text) => {
+      addMessage(text, 'assistant');
+    });
+    
+    const unsubStatus = speechService.onStatusChange((speaking) => {
+      setIsSpeaking(speaking);
+    });
+
+    return () => {
+      unsubSpeak();
+      unsubStatus();
+    };
   }, [addMessage]);
 
   useEffect(() => {
@@ -264,6 +265,13 @@ function App() {
       <Background3D />
       <div className="cursor-light" />
       
+      <Navbar 
+        onOpenToolbox={() => setShowWidgetDrawer(true)}
+        onToggleFocusMode={() => setFocusMode(!focusMode)}
+        onOpenSettings={() => setShowSettings(true)}
+        focusMode={focusMode}
+      />
+      
       {/* Dashboard Content with Scale/Blur Effect */}
       <motion.div 
         className="dashboard-wrapper"
@@ -280,33 +288,6 @@ function App() {
         }}
       >
         <OfflineIndicator status={status} />
-
-        <div className="top-bar">
-          <button
-            className="top-btn"
-            onClick={() => setShowWidgetDrawer(true)}
-            aria-label="Open toolbox"
-            title="Toolbox (Ctrl+T)"
-          >
-            <i className="fas fa-th-large"></i>
-          </button>
-          <button
-            className={`top-btn ${focusMode ? 'active' : ''}`}
-            onClick={() => setFocusMode(!focusMode)}
-            aria-label="Toggle focus mode"
-            title="Focus Mode (Ctrl+F)"
-          >
-            <i className="fas fa-expand"></i>
-          </button>
-          <button
-            className="top-btn"
-            onClick={() => setShowSettings(true)}
-            aria-label="Open settings"
-            title="Settings"
-          >
-            <i className="fas fa-cog"></i>
-          </button>
-        </div>
 
         {!isStarted ? (
           <div className="start-screen">

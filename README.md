@@ -1,73 +1,87 @@
-# React + TypeScript + Vite
+# 🌌 OnIt - The Future of Virtual Assistance
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+![OnIt Hero Banner](./onit_hero_banner.png)
 
-Currently, two official plugins are available:
+**OnIt** is a next-generation, immersive virtual assistant designed to elevate your productivity with a premium, high-impact aesthetic. Marrying cutting-edge 3D visuals with intuitive voice and text interaction, OnIt isn't just a tool—it's a living interface.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+---
 
-## React Compiler
+## ✨ Key Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### 🎙️ Intelligent Voice & Text Interaction
+Interact seamlessly using your voice or keyboard. Powered by the Web Speech API, OnIt listens, understands, and speaks back to you with personality.
 
-## Expanding the ESLint configuration
+### 🔮 Immersive 3D Glassmorphism UI
+Experience a dashboard like no other.
+- **Dynamic Starfield**: A reactive 3D background built with Three.js.
+- **Holographic Aesthetics**: Sleek glassmorphism components with shimmer effects and CSS-driven lighting.
+- **Time-Aware Themes**: The assistant's aura and theme automatically shift based on the time of day (Morning, Afternoon, Evening, Night).
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### 🛠️ Integrated Toolbox & Widgets
+A dedicated **Widget Drawer** gives you quick access to essential tools:
+- **Calculator**: Quick computation at your fingertips.
+- **Sticky Notes**: Never lose a thought.
+- **Unit Converter**: Seamless transitions between measurements.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+### ⚡ Power Features
+- **Focus Mode**: Minimize distractions and focus on the assistant.
+- **Keyboard Shortcuts**: Navigate the entire app without a mouse.
+- **Voice History**: Review past interactions in a beautiful, staggered chat feed.
+- **Quick Action Chips**: One-tap access to common commands like Weather, Time, and Jokes.
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+---
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## 🚀 Tech Stack
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+- **Core**: [React 19](https://react.dev/), [TypeScript](https://www.typescriptlang.org/)
+- **Visuals**: [Three.js](https://threejs.org/), [@react-three/fiber](https://docs.pmnd.rs/react-three-fiber/), [@react-three/drei](https://docs.pmnd.rs/drei/)
+- **Animations**: [Framer Motion](https://www.framer.com/motion/)
+- **Styling**: Vanilla CSS (Modern Custom Properties, Glassmorphism, Responsive Grid)
+- **APIs**: Web Speech API (Recognition & Synthesis), Open-Meteo, Wikipedia REST API
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+---
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## 📖 Getting Started
+
+### Prerequisites
+- [Node.js](https://nodejs.org/) (Latest LTS recommended)
+- [npm](https://www.npmjs.com/) or [yarn](https://yarnpkg.com/)
+
+### Installation
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/your-username/onit.git
+   ```
+2. Navigate to the project directory:
+   ```bash
+   cd onit
+   ```
+3. Install dependencies:
+   ```bash
+   npm install
+   ```
+4. Start the development server:
+   ```bash
+   npm run dev
+   ```
+
+---
+
+## 💡 How to Use
+- **Start**: Click the "Start Assistant" button or press `Enter` to wake up OnIt.
+- **Speak**: Click the Microphone icon or press `Ctrl+M` to start voice recognition.
+- **Type**: Simply type your command in the input field and press `Enter`.
+- **Toggle Toolbox**: Press `Ctrl+T` or click the toolbox icon in the navbar.
+- **Focus Mode**: Press `Ctrl+F` to hide distractions.
+- **Help**: Type "help" or "?" to see all available commands and shortcuts.
+
+---
+
+## 🛡️ License
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+<p align="center">
+  Built with 💜 by <b>Amay (Foxa)</b>
+</p>

@@ -1,0 +1,97 @@
+﻿
+> onit@0.0.0 lint
+> eslint .
+
+
+E:\Projects\OnIt\src\App.tsx
+  247:6  warning  React Hook useEffect has a missing dependency: 'handleMicClick'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+E:\Projects\OnIt\src\components\VoiceWaveform.tsx
+  19:13  error    Error: Cannot access variable before it is declared
+
+`initAudio` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+E:\Projects\OnIt\src\components\VoiceWaveform.tsx:19:13
+  17 |     useEffect(() => {
+  18 |         if (isActive) {
+> 19 |             initAudio();
+     |             ^^^^^^^^^ `initAudio` accessed before it is declared
+  20 |         } else {
+  21 |             stopAudio();
+  22 |         }
+
+E:\Projects\OnIt\src\components\VoiceWaveform.tsx:29:5
+   27 |     }, [isActive]);
+   28 |
+>  29 |     const initAudio = async () => {
+      |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>  30 |         try {
+      | ^^^^^^^^^^^^^
+>  31 |             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      ΓÇª
+      | ^^^^^^^^^^^^^
+> 123 |         }
+      | ^^^^^^^^^^^^^
+> 124 |     };
+      | ^^^^^^^ `initAudio` is declared here
+  125 |
+  126 |     const stopAudio = () => {
+  127 |         if (animationFrameRef.current) {  react-hooks/immutability
+  21:13  error    Error: Cannot access variable before it is declared
+
+`stopAudio` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+E:\Projects\OnIt\src\components\VoiceWaveform.tsx:21:13
+  19 |             initAudio();
+  20 |         } else {
+> 21 |             stopAudio();
+     |             ^^^^^^^^^ `stopAudio` accessed before it is declared
+  22 |         }
+  23 |
+  24 |         return () => {
+
+E:\Projects\OnIt\src\components\VoiceWaveform.tsx:126:5
+  124 |     };
+  125 |
+> 126 |     const stopAudio = () => {
+      |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 127 |         if (animationFrameRef.current) {
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 128 |             cancelAnimationFrame(animationFrameRef.current);
+      ΓÇª
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 143 |         }
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 144 |     };
+      | ^^^^^^^ `stopAudio` is declared here
+  145 |
+  146 |     return (
+  147 |         <canvas         react-hooks/immutability
+  27:8   warning  React Hook useEffect has a missing dependency: 'initAudio'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  react-hooks/exhaustive-deps
+  34:50  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      @typescript-eslint/no-explicit-any
+  34:82  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      @typescript-eslint/no-explicit-any
+  62:64  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      @typescript-eslint/no-explicit-any
+
+E:\Projects\OnIt\src\components\widgets\UnitConverter.tsx
+  22:17  error  'c' is never reassigned. Use 'const' instead  prefer-const
+
+E:\Projects\OnIt\src\services\commandPlugins.ts
+  132:24  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  209:24  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  255:30  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  314:30  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\Projects\OnIt\src\services\speechService.ts
+    4:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   15:24  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   16:24  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   76:45  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   98:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  104:18  error  'e' is defined but never used             @typescript-eslint/no-unused-vars
+
+E:\Projects\OnIt\src\types\index.ts
+  29:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+Γ£û 19 problems (17 errors, 2 warnings)
+  1 error and 0 warnings potentially fixable with the `--fix` option.
+

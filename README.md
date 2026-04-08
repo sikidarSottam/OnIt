@@ -81,7 +81,3 @@ A dedicated **Widget Drawer** gives you quick access to essential tools:
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
-
-<p align="center">
-  Built with 💜 by <b>Amay (Foxa)</b>
-</p>

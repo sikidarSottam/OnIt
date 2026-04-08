@@ -1,5 +1,7 @@
 # 🌌 OnIt - The Future of Virtual Assistance
 
+Live Demo: https://on-it-sigma.vercel.app/
+
 **OnIt** is a next-generation, immersive virtual assistant designed to elevate your productivity with a premium, high-impact aesthetic. Marrying cutting-edge 3D visuals with intuitive voice and text interaction, OnIt isn't just a tool—it's a living interface.
 
 ---

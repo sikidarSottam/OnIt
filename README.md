@@ -1,5 +1,176 @@
 # 🌌 OnIt - The Future of Virtual Assistance
 
+![Live Demo](https://on-it-sigma.vercel.app/)
+
+![OnIt screenshot](file:///e:/Projects/OnIt/src/assets/Screenshot%20(60).png)
+
+[![](https://img.shields.io/badge/license-MIT-green)](LICENSE) [![](https://img.shields.io/badge/website-live-blue)](https://on-it-sigma.vercel.app/) [![](https://img.shields.io/badge/npm-v1.0.0-blue)](https://www.npmjs.com/package/onit)
+
+## 📖 Overview
+**OnIt** is a next‑generation, immersive virtual assistant that blends cutting‑edge 3D glassmorphism visuals with intelligent voice and text interaction. It provides a premium, high‑impact UI for productivity‑focused users, offering a living interface that reacts to time of day, voice commands, and custom widgets.
+
+---
+
+## 📚 Table of Contents
+- [🚀 Live Demo](#-live-demo)
+- [✨ Key Features](#-key-features)
+- [🏗️ Architecture Overview](#-architecture-overview)
+- [📁 Project Structure](#-project-structure)
+- [🛠️ Tech Stack](#-tech-stack)
+- [⚙️ Getting Started](#-getting-started)
+- [📜 Scripts & Commands](#-scripts--commands)
+- [🧪 Testing](#-testing)
+- [🤝 Contributing](#-contributing)
+- [🙌 Acknowledgements](#-acknowledgements)
+- [🛡️ License](#-license)
+
+---
+
+## 🚀 Live Demo
+Explore the full experience at **[OnIt Live Demo](https://on-it-sigma.vercel.app/)**.
+
+---
+
+## ✨ Key Features
+- **Intelligent Voice & Text Interaction** – Powered by the Web Speech API for seamless voice commands and typed input.
+- **Immersive 3D Glassmorphism UI** – Dynamic starfield background, holographic components, and time‑aware themes.
+- **Integrated Toolbox & Widgets** – Calculator, Sticky Notes, Unit Converter, and quick‑action chips (Weather, Time, Jokes).
+- **Focus Mode** – Distraction‑free workspace.
+- **Keyboard Shortcuts** – Full navigation without a mouse.
+- **Voice History** – Staggered chat feed of past interactions.
+
+---
+
+## 🏗️ Architecture Overview
+```mermaid
+flowchart TD
+    subgraph UI[User Interface]
+        Navbar[Navbar]
+        Canvas[3D Canvas (Three.js)]
+        WidgetDrawer[Widget Drawer]
+        Chat[Chat Feed]
+    end
+    subgraph Services[Application Services]
+        VoiceService[Voice Service]
+        APIService[External API Service]
+        StateStore[Global State (React Context)]
+    end
+    UI --> VoiceService
+    UI --> APIService
+    UI --> StateStore
+    VoiceService --> APIService
+    APIService --> StateStore
+    StateStore --> UI
+```
+The UI interacts with **VoiceService** and **APIService**, both reading/writing the **Global State**. The 3D canvas is powered by **Three.js** via `@react-three/fiber`.
+
+---
+
+## 📁 Project Structure
+```
+src/
+├─ assets/                # Static assets (images, icons, fonts)
+├─ components/            # Re‑usable UI components
+│   ├─ Navbar.tsx
+│   ├─ WidgetDrawer.tsx
+│   └─ ...
+├─ services/              # Business logic & API integrations
+│   ├─ voiceService.ts
+│   ├─ weatherService.ts
+│   └─ ...
+├─ hooks/                 # Custom React hooks
+│   └─ useTheme.ts
+├─ store/                 # Global state (React Context / Zustand)
+│   └─ index.ts
+├─ styles/                # Vanilla CSS with custom properties
+│   └─ globals.css
+├─ App.tsx                # Root component
+└─ main.tsx               # Entry point
+```
+Each folder follows a **single‑responsibility** principle, making the codebase easy to navigate and extend.
+
+---
+
+## 🛠️ Tech Stack
+- **Core**: React 19, TypeScript
+- **3D**: Three.js, @react-three/fiber, @react-three/drei
+- **Animations**: Framer Motion
+- **Styling**: Vanilla CSS with CSS Custom Properties (dark mode, glassmorphism)
+- **APIs**: Web Speech API, Open‑Meteo, Wikipedia REST
+
+---
+
+## ⚙️ Getting Started
+### Prerequisites
+- Node.js ≥ 18 (LTS)
+- npm ≥ 9 or Yarn
+
+### Installation
+```bash
+# Clone the repository
+git clone https://github.com/sikidarSottam/OnIt.git
+cd OnIt
+# Install dependencies
+npm install   # or `yarn`
+```
+### Development
+```bash
+npm run dev   # Starts Vite dev server at http://localhost:5173
+```
+Open the URL in a modern browser (Chrome ≥ 112 recommended) to experience the full UI.
+
+---
+
+## 📜 Scripts & Commands
+| Script | Description |
+|--------|-------------|
+| `dev` | Launches the Vite development server |
+| `build` | Produces an optimized production bundle |
+| `preview` | Serves the production build locally |
+| `lint` | Runs ESLint + Prettier checks |
+| `test` | Executes unit & integration tests |
+
+---
+
+## 🧪 Testing
+```bash
+npm run test
+```
+The test suite uses **Vitest** and **React Testing Library** to cover core components and services.
+
+---
+
+## 🤝 Contributing
+Contributions are welcome! Please follow these steps:
+1. Fork the repository.
+2. Create a feature branch (`git checkout -b feat/awesome-feature`).
+3. Ensure linting passes (`npm run lint`).
+4. Write tests for new functionality.
+5. Open a Pull Request with a clear description of changes.
+
+*Optional*: Add a **CODE_OF_CONDUCT.md** and follow the conventional commits style.
+
+---
+
+## 🙌 Acknowledgements
+- **Three.js** – 3D rendering engine
+- **@react-three/fiber** & **@react-three/drei** – React bindings for Three.js
+- **Framer Motion** – Animation library
+- **Web Speech API** – Voice recognition & synthesis
+- **Open‑Meteo** – Weather data
+- **Wikipedia REST API** – Content lookup
+
+---
+
+## 🛡️ License
+This project is licensed under the MIT License – see the [LICENSE](LICENSE) file for details.
+
+---
+
+*Crafted with ✨ by the OnIt team.*
+
+Live Demo: https://on-it-sigma.vercel.app/
+
 ## 📚 Table of Contents
 - [✨ Key Features](#-key-features)
 - [🏗️ Architecture Overview](#-architecture-overview)
@@ -151,16 +322,6 @@ This project is licensed under the MIT License – see the [LICENSE](LICENSE) fi
 
 *Crafted with ✨ by the OnIt team.*
 
-## 📚 Table of Contents
-- [✨ Key Features](#-key-features)
-- [🏗️ Architecture Overview](#-architecture-overview)
-- [📁 Project Structure](#-project-structure)
-- [🛠️ Tech Stack](#-tech-stack)
-- [🚀 Getting Started](#-getting-started)
-- [📜 Scripts & Commands](#-scripts--commands)
-- [🧪 Testing](#-testing)
-- [🤝 Contributing](#-contributing)
-- [🛡️ License](#-license)
 
 ---
 
